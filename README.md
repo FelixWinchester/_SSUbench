@@ -1,1 +1,94 @@
-# _SSUbench
+# SsuBench
+
+REST API платформы для размещения заданий с оплатой виртуальными баллами  
+(тестовое задание)
+
+[![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ТВОЙ_USERNAME/ssubench)](go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Winchester/ssubench)](https://goreportcard.com/report/github.com/ТВОЙ_USERNAME/ssubench)
+
+Сервис, где заказчики размещают задания, исполнители откликаются, а оплата происходит виртуальными баллами (атомарно в транзакции PostgreSQL).
+
+- **заказчики** создают и публикуют задания  
+- **исполнители** откликаваются на них  
+- заказчик выбирает одного исполнителя  
+- после выполнения и подтверждения баллы автоматически списываются у заказчика и начисляются исполнителю (атомарно, в транзакции)
+
+<br>
+
+## Основные возможности
+
+- Регистрация и аутентификация через **JWT** (Bearer token)  
+- Три роли: **заказчик** (customer), **исполнитель** (executor), **администратор** (admin)  
+- Полный основной флоу:  
+  1. Заказчик создаёт → публикует задание  
+  2. Исполнители оставляют отклики (bids)  
+  3. Заказчик выбирает одного исполнителя  
+  4. Выбранный исполнитель помечает задание выполненным  
+  5. Заказчик подтверждает выполнение  
+  6. Атомарный перевод баллов (в одной транзакции)  
+- Администратор может блокировать / разблокировать пользователей  
+- Строгое соблюдение бизнес-правил (см. ниже)  
+- Пагинация списков, валидация входных данных, единый формат ошибок  
+- Middleware: request_id, структурированное логгирование, panic recover  
+- Graceful shutdown и таймауты HTTP-сервера  
+
+<br>
+
+## Сущности
+
+- **User** — пользователь (email, пароль (bcrypt), роль, баланс, is_blocked)  
+- **Task** — задание (title, description, points, status, customer_id, executor_id)  
+- **Bid** — отклик исполнителя на задание  
+- **Payment** — запись перевода баллов (from_user_id, to_user_id, task_id, amount)  
+
+<br>
+
+## Ключевые бизнес-правила
+
+1. У задачи может быть **только одна подтверждённая заявка** (выбранный исполнитель)  
+2. Только **выбранный исполнитель** может пометить задачу как выполненную  
+3. Только **заказчик** может подтвердить выполнение  
+4. Подтверждение выполнения → **атомарный** перевод баллов в транзакции  
+5. Если у заказчика **недостаточно баллов** — подтверждение невозможно (ошибка)  
+6. Выполненные задачи **нельзя отменить**  
+7. Задачи можно отменять только до выбора исполнителя / выполнения  
+
+<br>
+
+## Технологии и нефункциональные требования
+
+- Язык: **Go** (рекомендуется 1.22+)  
+- База данных: **PostgreSQL** (запускается в Docker)  
+- Миграции: SQL-миграции (goose / golang-migrate / migrate)  
+- Архитектура: **handler → service → repository**  
+- Хранение паролей: **bcrypt**  
+- Аутентификация: **JWT** в заголовке `Authorization: Bearer <token>`  
+- Валидация: go-playground/validator или аналог  
+- Формат ошибок: единый JSON-ответ  
+- Middleware: request_id, logging, recover  
+- Пагинация для списков заданий / откликов  
+- Тесты: минимум **12 unit/integration тестов** (бизнес-правила, роли, транзакции)  
+- Документация API: **openapi.yaml** (OpenAPI 3.0)  
+- Docker + docker-compose  
+
+<br>
+
+## Быстрый старт
+
+```bash
+git clone https://github.com/ВАШ-username/ssubench.git
+cd ssubench
+
+# 1. Копируем пример окружения
+cp .env.example .env
+
+# 2. Запускаем PostgreSQL и применяем миграции
+docker compose up -d postgres
+make migrate-up    # или goose up / migrate -path migrations up
+
+# 3. Запускаем приложение
+make run           # или go run ./cmd/ssubench
