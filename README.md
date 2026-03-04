@@ -4,11 +4,9 @@ REST API платформы для размещения заданий с опл
 (тестовое задание)
 
 [![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)](https://go.dev)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/ТВОЙ_USERNAME/ssubench)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Winchester/ssubench)](https://goreportcard.com/report/github.com/ТВОЙ_USERNAME/ssubench)
 
 Сервис, где заказчики размещают задания, исполнители откликаются, а оплата происходит виртуальными баллами (атомарно в транзакции PostgreSQL).
 
