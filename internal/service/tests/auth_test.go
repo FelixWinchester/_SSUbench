@@ -14,9 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newAuthService(userRepo *mocks.UserRepo) service.AuthService {
+	return service.NewAuthService(userRepo, "secret", time.Hour, 1000)
+}
+
 func TestAuthService_Register_Success(t *testing.T) {
 	userRepo := new(mocks.UserRepo)
-	svc := service.NewAuthService(userRepo, "secret", time.Hour)
+	svc := newAuthService(userRepo)
 
 	input := service.RegisterInput{
 		Email:    "test@example.com",
@@ -33,12 +37,13 @@ func TestAuthService_Register_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, input.Email, user.Email)
 	assert.Equal(t, input.Role, user.Role)
+	assert.Equal(t, int64(1000), user.Balance)
 	assert.NotEqual(t, input.Password, user.PasswordHash)
 }
 
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	userRepo := new(mocks.UserRepo)
-	svc := service.NewAuthService(userRepo, "secret", time.Hour)
+	svc := newAuthService(userRepo)
 
 	input := service.RegisterInput{
 		Email:    "test@example.com",
@@ -60,7 +65,7 @@ func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 
 func TestAuthService_Login_InvalidPassword(t *testing.T) {
 	userRepo := new(mocks.UserRepo)
-	svc := service.NewAuthService(userRepo, "secret", time.Hour)
+	svc := newAuthService(userRepo)
 
 	input := service.LoginInput{
 		Email:    "test@example.com",
@@ -83,7 +88,7 @@ func TestAuthService_Login_InvalidPassword(t *testing.T) {
 
 func TestAuthService_Login_BlockedUser(t *testing.T) {
 	userRepo := new(mocks.UserRepo)
-	svc := service.NewAuthService(userRepo, "secret", time.Hour)
+	svc := newAuthService(userRepo)
 
 	input := service.LoginInput{
 		Email:    "blocked@example.com",
@@ -101,4 +106,14 @@ func TestAuthService_Login_BlockedUser(t *testing.T) {
 
 	_, err := svc.Login(context.Background(), input)
 	assert.ErrorIs(t, err, domain.ErrUserBlocked)
+}
+
+func TestAuthService_Token_Success(t *testing.T) {
+	userRepo := new(mocks.UserRepo)
+	svc := newAuthService(userRepo)
+
+	userID := uuid.New()
+	token, err := svc.Token(context.Background(), userID, domain.RoleCustomer)
+	require.NoError(t, err)
+	assert.NotEmpty(t, token)
 }

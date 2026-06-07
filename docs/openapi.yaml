@@ -40,6 +40,31 @@ components:
           enum: [customer, executor]
           example: "customer"
 
+    RegisterResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            role:
+              type: string
+              enum: [customer, executor, admin]
+            balance:
+              type: integer
+              example: 1000
+            created_at:
+              type: string
+              format: date-time
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
     LoginRequest:
       type: object
       required: [email, password]
@@ -214,14 +239,11 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
-          description: User registered successfully
+          description: User registered successfully (with JWT token)
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/RegisterResponse'
         '400':
           description: Invalid request body
           content:

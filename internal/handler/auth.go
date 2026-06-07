@@ -31,11 +31,19 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := h.auth.Token(r.Context(), user.ID, user.Role)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"id":         user.ID,
 		"email":      user.Email,
 		"role":       user.Role,
+		"balance":    user.Balance,
 		"created_at": user.CreatedAt,
+		"token":      token,
 	})
 }
 

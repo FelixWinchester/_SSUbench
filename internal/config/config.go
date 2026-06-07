@@ -37,7 +37,8 @@ type JWTConfig struct {
 }
 
 type AppConfig struct {
-	LogLevel string `env:"LOG_LEVEL" env-default:"debug"`
+	LogLevel       string `env:"LOG_LEVEL"        env-default:"debug"`
+	InitialBalance int64  `env:"INITIAL_BALANCE"  env-default:"1000"`
 }
 
 func (d *DatabaseConfig) DSN() string {

@@ -10,6 +10,7 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, input RegisterInput) (*domain.User, error)
 	Login(ctx context.Context, input LoginInput) (string, error)
+	Token(ctx context.Context, userID uuid.UUID, role domain.Role) (string, error)
 }
 
 type UserService interface {

@@ -13,16 +13,18 @@ import (
 )
 
 type authService struct {
-	userRepo  repo.UserRepo
-	jwtSecret string
-	jwtTTL    time.Duration
+	userRepo       repo.UserRepo
+	jwtSecret      string
+	jwtTTL         time.Duration
+	initialBalance int64
 }
 
-func NewAuthService(userRepo repo.UserRepo, jwtSecret string, jwtTTL time.Duration) AuthService {
+func NewAuthService(userRepo repo.UserRepo, jwtSecret string, jwtTTL time.Duration, initialBalance int64) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
-		jwtTTL:    jwtTTL,
+		userRepo:       userRepo,
+		jwtSecret:      jwtSecret,
+		jwtTTL:         jwtTTL,
+		initialBalance: initialBalance,
 	}
 }
 
@@ -48,7 +50,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		Email:        input.Email,
 		PasswordHash: string(hash),
 		Role:         input.Role,
-		Balance:      0,
+		Balance:      s.initialBalance,
 		IsBlocked:    false,
 		CreatedAt:    now,
 		UpdatedAt:    now,
@@ -75,7 +77,7 @@ func (s *authService) Login(ctx context.Context, input LoginInput) (string, erro
 		return "", domain.ErrInvalidCredentials
 	}
 
-	token, err := s.generateToken(user)
+	token, err := s.Token(ctx, user.ID, user.Role)
 	if err != nil {
 		return "", fmt.Errorf("authService.Login: %w", err)
 	}
@@ -89,10 +91,10 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func (s *authService) generateToken(user *domain.User) (string, error) {
+func (s *authService) Token(_ context.Context, userID uuid.UUID, role domain.Role) (string, error) {
 	claims := Claims{
-		UserID: user.ID.String(),
-		Role:   string(user.Role),
+		UserID: userID.String(),
+		Role:   string(role),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.jwtTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -102,3 +104,5 @@ func (s *authService) generateToken(user *domain.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.jwtSecret))
 }
+
+

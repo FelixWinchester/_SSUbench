@@ -40,7 +40,7 @@ func main() {
 	paymentRepo := repo.NewPaymentRepo(db)
 
 	// Services
-	authSvc := service.NewAuthService(userRepo, cfg.JWT.Secret, cfg.JWT.TTL)
+	authSvc := service.NewAuthService(userRepo, cfg.JWT.Secret, cfg.JWT.TTL, cfg.App.InitialBalance)
 	userSvc := service.NewUserService(userRepo)
 	taskSvc := service.NewTxTaskService(db, taskRepo, userRepo, bidRepo, paymentRepo)
 	bidSvc := service.NewBidService(bidRepo, taskRepo)

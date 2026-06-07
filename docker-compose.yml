@@ -18,5 +18,28 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ssubench_app
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: "8080"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: ssubench
+      DB_SSL_MODE: disable
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
+      JWT_TTL: 24h
+      LOG_LEVEL: debug
+      INITIAL_BALANCE: "1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
